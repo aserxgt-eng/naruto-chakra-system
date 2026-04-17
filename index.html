@@ -38,9 +38,10 @@ body { margin:0; overflow:hidden; background:black; }
   z-index:20;
 }
 
-#charge{ width:1200px; }
-#chakra{ width:2000px; }
+#charge{ width:1400px; }
+#chakra{ width:2200px; }
 
+/* Instagram Button */
 #cornerBtn{
   position:absolute;
   bottom:20px;
@@ -64,11 +65,11 @@ body { margin:0; overflow:hidden; background:black; }
 <a href="https://www.instagram.com/_whois._.adii?igsh=MTN5cXpidG8zdHUwaA==" 
 target="_blank" id="cornerBtn">📸 Follow Adii</a>
 
-<!-- 🎬 EFFECTS -->
-<video id="charge" class="fx" src="assets/charge.mp4" muted autoplay loop></video>
-<video id="chakra" class="fx" src="assets/chakra.mp4" muted autoplay loop></video>
+<!-- 🎬 VISUALS -->
+<video id="charge" class="fx" src="assets/naruto.mp4" muted autoplay loop></video>
+<video id="chakra" class="fx" src="assets/sasuke.mp4" muted autoplay loop></video>
 
-<!-- 🔊 SOUNDS -->
+<!-- 🔊 SOUND -->
 <audio id="chargeSound" src="assets/charge.mp3"></audio>
 <audio id="chakraSound" src="assets/chakra.mp3"></audio>
 
@@ -116,18 +117,21 @@ function onResults(res){
     const p=res.multiHandLandmarks[0];
 
     const open=checkOpen(p);
-    pwr+=open?0.04:-0.08;
-    pwr=Math.max(0,Math.min(1,pwr));
+
+    // power build
+    pwr += open ? 0.04 : -0.08;
+    pwr = Math.max(0, Math.min(1, pwr));
 
     const w=p[0];
     const k=p[9];
+
     const tx=(w.x+k.x)/2;
     const ty=(w.y+k.y)/2;
 
     const x=(1-tx)*innerWidth;
     const y=ty*innerHeight;
 
-    // ⚡ CHARGING PHASE
+    // ⚡ CHARGING
     if(pwr>0.05 && pwr<0.6){
       chargeV.style.left=x+"px";
       chargeV.style.top=y+"px";
@@ -139,7 +143,7 @@ function onResults(res){
       }
     }
 
-    // 🌀 FULL POWER
+    // 🌀 FINAL CHAKRA
     if(pwr>=0.6){
       chakraV.style.left=x+"px";
       chakraV.style.top=y+"px";
@@ -159,11 +163,18 @@ const hands=new Hands({
   locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
 });
 
-hands.setOptions({maxNumHands:1});
+hands.setOptions({
+  maxNumHands:1,
+  minDetectionConfidence:0.65,
+  minTrackingConfidence:0.65
+});
+
 hands.onResults(onResults);
 
 new Camera(v,{
-  onFrame:async()=>await hands.send({image:v})
+  onFrame:async()=>await hands.send({image:v}),
+  width:1280,
+  height:720
 }).start();
 </script>
 
