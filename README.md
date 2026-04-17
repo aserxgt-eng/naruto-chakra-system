@@ -103,7 +103,7 @@ Enhances tracking precision and visual effects.
 
 👑 Author
 
-INSTAGRAM : @_whois._.adii
-EMAIL ✉️ : aserxgt@gmail.com
+INSTAGRAM : @_whois._.adii            
+EMAIL✉️: aserxgt@gmail.com
 
 «"Control the chakra. Master the code."»
