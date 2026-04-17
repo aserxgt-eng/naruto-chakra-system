@@ -1,59 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>naruto</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>naruto</title>
+  
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; background-color: black; }
 
-<style>
-body { margin:0; overflow:hidden; background:black; }
+    #v_src, #out {
+      position: absolute; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      object-fit: cover; transform: scaleX(-1);
+    }
 
-#v_src,#out{
-  position:absolute;
-  width:100vw;
-  height:100vh;
-  object-fit:cover;
-  transform:scaleX(-1);
-}
+    #out { z-index: 2; pointer-events: none; }
 
-#out{ z-index:2; }
+    .darkness {
+      position: absolute;
+      width: 100vw; height: 100vh;
+      background: rgba(10, 5, 0, 0.3);
+      z-index: 5;
+    }
 
-.darkness{
-  position:absolute;
-  width:100%;
-  height:100%;
-  background:rgba(10,5,0,0.3);
-  z-index:5;
-}
+    .fx {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      display: none;
+      mix-blend-mode: screen;
+      z-index: 20;
+    }
 
-.fx{
-  position:absolute;
-  transform:translate(-50%,-50%);
-  display:none;
-  mix-blend-mode:screen;
-  z-index:20;
-}
+    #n { width: 1600px; }
+    #s { width: 2400px; }
 
-#charge{ width:1400px; }
-#chakra{ width:2200px; }
-
-/* Instagram Button */
-#cornerBtn{
-  position:absolute;
-  bottom:20px;
-  right:20px;
-  z-index:999;
-  padding:10px 16px;
-  background:linear-gradient(45deg,#ff0057,#ff7a00);
-  color:white;
-  text-decoration:none;
-  border-radius:20px;
-}
-</style>
+    #instaBtn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      z-index: 999;
+      padding: 10px 16px;
+      background: linear-gradient(45deg, #ff0057, #ff7a00);
+      color: white;
+      text-decoration: none;
+      border-radius: 20px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
 <body>
@@ -62,38 +59,40 @@ body { margin:0; overflow:hidden; background:black; }
 <canvas id="out"></canvas>
 <div class="darkness"></div>
 
-<a href="https://www.instagram.com/_whois._.adii?igsh=MTN5cXpidG8zdHUwaA==" 
-target="_blank" id="cornerBtn">📸 Follow Adii</a>
+<a href="https://www.instagram.com/_whois._.adii" target="_blank" id="instaBtn">
+📸 Follow Adii
+</a>
 
 <!-- 🎬 VISUALS -->
-<video id="charge" class="fx" src="assets/naruto.mp4" muted autoplay loop></video>
-<video id="chakra" class="fx" src="assets/sasuke.mp4" muted autoplay loop></video>
+<video id="n" class="fx" src="assets/naruto.mp4" muted autoplay loop></video>
+<video id="s" class="fx" src="assets/sasuke.mp4" muted autoplay loop></video>
 
 <!-- 🔊 SOUND -->
 <audio id="chargeSound" src="assets/charge.mp3"></audio>
 <audio id="chakraSound" src="assets/chakra.mp3"></audio>
 
 <script>
-const v=document.getElementById('v_src');
-const c=document.getElementById('out');
-const ctx=c.getContext('2d');
+const v = document.getElementById('v_src');
+const c = document.getElementById('out');
+const ctx = c.getContext('2d');
 
-const chargeV=document.getElementById('charge');
-const chakraV=document.getElementById('chakra');
+const n = document.getElementById('n');
+const s = document.getElementById('s');
 
-const chargeS=document.getElementById('chargeSound');
-const chakraS=document.getElementById('chakraSound');
+const chargeSound = document.getElementById('chargeSound');
+const chakraSound = document.getElementById('chakraSound');
 
-let pwr=0;
-let wasOpen=false;
+let pwr=[0,0];
+let wasOpen=[false,false];
 let audioEnabled=false;
 
+// 🔥 enable audio
 document.body.addEventListener("click",()=>audioEnabled=true);
 
-function play(s){
+function playSound(sound){
   if(!audioEnabled) return;
-  s.currentTime=0;
-  s.play();
+  sound.currentTime=0;
+  sound.play();
 }
 
 function checkOpen(p){
@@ -110,52 +109,53 @@ function onResults(res){
   c.height=v.videoHeight;
   ctx.clearRect(0,0,c.width,c.height);
 
-  chargeV.style.display='none';
-  chakraV.style.display='none';
+  n.style.display='none';
+  s.style.display='none';
 
-  if(res.multiHandLandmarks){
-    const p=res.multiHandLandmarks[0];
+  if(res.multiHandLandmarks && res.multiHandedness){
+    res.multiHandLandmarks.forEach((p,i)=>{
+      let isR=res.multiHandedness[i].label==="Right";
+      let idx=isR?1:0;
 
-    const open=checkOpen(p);
+      drawConnectors(ctx,p,HAND_CONNECTIONS,{color:'#00d4ff'});
+      drawLandmarks(ctx,p,{color:'#fff'});
 
-    // power build
-    pwr += open ? 0.04 : -0.08;
-    pwr = Math.max(0, Math.min(1, pwr));
+      let open=checkOpen(p);
+      pwr[idx]+=open?0.05:-0.15;
+      pwr[idx]=Math.max(0,Math.min(1,pwr[idx]));
 
-    const w=p[0];
-    const k=p[9];
-
-    const tx=(w.x+k.x)/2;
-    const ty=(w.y+k.y)/2;
-
-    const x=(1-tx)*innerWidth;
-    const y=ty*innerHeight;
-
-    // ⚡ CHARGING
-    if(pwr>0.05 && pwr<0.6){
-      chargeV.style.left=x+"px";
-      chargeV.style.top=y+"px";
-      chargeV.style.display='block';
-      chargeV.style.opacity=pwr;
-
-      if(open && !wasOpen){
-        play(chargeS);
+      // 🔊 SOUND TRIGGER
+      if(open && !wasOpen[idx]){
+        if(isR){
+          s.play();
+          playSound(chakraSound);
+        } else {
+          n.play();
+          playSound(chargeSound);
+        }
       }
-    }
 
-    // 🌀 FINAL CHAKRA
-    if(pwr>=0.6){
-      chakraV.style.left=x+"px";
-      chakraV.style.top=y+"px";
-      chakraV.style.display='block';
-      chakraV.style.opacity=pwr;
+      wasOpen[idx]=open;
 
-      if(open && !wasOpen){
-        play(chakraS);
+      let w=p[0],k=p[9];
+
+      if(pwr[idx]>0.01){
+        let tx=(w.x+k.x)/2;
+        let ty=(w.y+k.y)/2;
+
+        if(isR){
+          s.style.left=`${(1-tx)*innerWidth}px`;
+          s.style.top=`${ty*innerHeight}px`;
+          s.style.display='block';
+          s.style.opacity=pwr[idx];
+        } else {
+          n.style.left=`${(1-(k.x+(k.x-w.x)*0.8))*innerWidth}px`;
+          n.style.top=`${(k.y+(k.y-w.y)*0.8)*innerHeight-120}px`;
+          n.style.display='block';
+          n.style.opacity=pwr[idx];
+        }
       }
-    }
-
-    wasOpen=open;
+    });
   }
 }
 
@@ -163,18 +163,11 @@ const hands=new Hands({
   locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
 });
 
-hands.setOptions({
-  maxNumHands:1,
-  minDetectionConfidence:0.65,
-  minTrackingConfidence:0.65
-});
-
+hands.setOptions({maxNumHands:2});
 hands.onResults(onResults);
 
 new Camera(v,{
-  onFrame:async()=>await hands.send({image:v}),
-  width:1280,
-  height:720
+  onFrame:async()=>await hands.send({image:v})
 }).start();
 </script>
 
