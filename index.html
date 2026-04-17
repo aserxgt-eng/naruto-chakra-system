@@ -8,8 +8,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-  
-  <!-- ✅ ADDED: Face Mesh -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js"></script>
 
   <style>
@@ -52,16 +50,12 @@
     const n = document.getElementById('n');
     const s = document.getElementById('s');
 
-    // ✅ ADDED: Sharingan image
     const sharinganImg = new Image();
     sharinganImg.src = "assets/sharingan.png";
 
     let pwr = [0, 0]; 
     let wasOpen = [false, false];
-
-    // ✅ ADDED: eye animation
     let eyePulse = 0;
-    let faceDetected = false;
 
     function checkOpen(pts) {
         let count = 0;
@@ -79,7 +73,6 @@
     function onResults(res) {
         cElement.width = vElement.videoWidth;
         cElement.height = vElement.videoHeight;
-        ctx.save();
         ctx.clearRect(0, 0, cElement.width, cElement.height);
 
         let fL = false;
@@ -104,6 +97,135 @@
                 const open = checkOpen(pts);
                 pwr[idx] += open ? 0.05 : -0.15;
                 pwr[idx] = Math.max(0, Math.min(1, pwr[idx]));
+
+                if (open && !wasOpen[idx]) {
+                    const vid = isR ? s : n;
+                    vid.currentTime = 0;
+                    vid.play();
+                }
+                wasOpen[idx] = open;
+
+                const wrist = pts[0];
+                const knk = pts[9];
+
+                if (pwr[idx] > 0.01) {
+                    if (isR) { 
+                        fR = true;
+                        const tx = (wrist.x + knk.x) / 2;
+                        const ty = (wrist.y + knk.y) / 2;
+                        s.style.left = `${(1 - tx) * window.innerWidth}px`;
+                        s.style.top = `${ty * window.innerHeight}px`;
+                        s.style.display = 'block';
+                        s.style.opacity = pwr[idx]; 
+                    } else { 
+                        fL = true;
+                        const dx = knk.x - wrist.x;
+                        const dy = knk.y - wrist.y;
+                        const tx = knk.x + (dx * 0.8);
+                        const ty = knk.y + (dy * 0.8);
+                        n.style.left = `${(1 - tx) * window.innerWidth}px`;
+                        n.style.top = `${(ty * window.innerHeight) - 120}px`;
+                        n.style.display = 'block';
+                        n.style.opacity = pwr[idx]; 
+                    }
+                }
+            });
+        }
+
+        if (!fL) {
+            pwr[0] = Math.max(0, pwr[0] - 0.15);
+            if (pwr[0] > 0.01) { n.style.display = 'block'; n.style.opacity = pwr[0]; }
+            wasOpen[0] = false;
+        }
+        if (!fR) {
+            pwr[1] = Math.max(0, pwr[1] - 0.15);
+            if (pwr[1] > 0.01) { s.style.display = 'block'; s.style.opacity = pwr[1]; }
+            wasOpen[1] = false;
+        }
+    }
+
+    function onFaceResults(res) {
+      if (!res.multiFaceLandmarks || res.multiFaceLandmarks.length === 0) return;
+
+      const lm = res.multiFaceLandmarks[0];
+
+      const lC = lm[468];
+      const rC = lm[473];
+
+      const lTop = lm[159], lBot = lm[145];
+      const rTop = lm[386], rBot = lm[374];
+
+      const lx = (1 - lC.x) * cElement.width;
+      const ly = lC.y * cElement.height;
+
+      const rx = (1 - rC.x) * cElement.width;
+      const ry = rC.y * cElement.height;
+
+      const lOpen = Math.abs(lTop.y - lBot.y);
+      const rOpen = Math.abs(rTop.y - rBot.y);
+
+      const blink = 0.01;
+
+      const dist = Math.hypot(lx - rx, ly - ry);
+      const size = dist * 0.18;
+
+      eyePulse += 0.05;
+      const pulse = 1 + Math.sin(eyePulse) * 0.05;
+
+      ctx.save();
+      ctx.shadowColor = "red";
+      ctx.shadowBlur = 20;
+
+      if (lOpen > blink) {
+        ctx.drawImage(sharinganImg, lx - size, ly - size, size*2*pulse, size*2*pulse);
+      }
+
+      if (rOpen > blink) {
+        ctx.drawImage(sharinganImg, rx - size, ry - size, size*2*pulse, size*2*pulse);
+      }
+
+      ctx.restore();
+    }
+
+    const h = new Hands({
+      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+    });
+
+    h.setOptions({
+      maxNumHands: 2,
+      modelComplexity: 1,
+      minDetectionConfidence: 0.65,
+      minTrackingConfidence: 0.65
+    });
+
+    h.onResults(onResults);
+
+    const faceMesh = new FaceMesh({
+      locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`
+    });
+
+    faceMesh.setOptions({
+      maxNumFaces: 1,
+      refineLandmarks: true,
+      minDetectionConfidence: 0.6,
+      minTrackingConfidence: 0.6
+    });
+
+    faceMesh.onResults(onFaceResults);
+
+    const cam = new Camera(vElement, {
+      onFrame: async () => {
+        await h.send({ image: vElement });
+        await faceMesh.send({ image: vElement });
+      },
+      width: 1280,
+      height: 720
+    });
+
+    cam.start();
+  </script>
+</body>
+</html>                pwr[idx] = Math.max(0, Math.min(1, pwr[idx]));
 
                 if (open && !wasOpen[idx]) {
                     const vid = isR ? s : n;
