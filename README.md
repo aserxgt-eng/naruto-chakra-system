@@ -1,28 +1,24 @@
 🌀 Naruto Chakra Control System
 
-«"Hands for power… eyes for control."»
+«"Hands for power…"»
 
-A real-time hand + eye tracking web project that lets you perform Naruto-style jutsus using your camera.
+A real-time hand tracking web project that lets you perform Naruto-style jutsus using your camera.
 
 This system uses:
 
 - ✋ Hands → to generate chakra
-- 👁️ Eyes → to activate Sharingan
-
 
 🎥 Demo
 
-Use your hands and eyes together to unlock abilities:
+Use your hands to unlock abilities:
 
 - 🔵 Rasengan (Right Palm)
 - 🟣 Dark Chakra (Left Palm)
-- 👁️ Sharingan (Eye Detection)
-
+  
 
 ⚙️ Features
 
 - ✋ Real-time hand tracking
-- 👁️ Eye detection (Sharingan system)
 - 🌀 Chakra-based visual effects
 - 🎯 Minimal gesture system (clean & responsive)
 - 🌐 Runs directly in browser
@@ -34,8 +30,6 @@ Action| Power
 ✋ Right Open Palm| Rasengan
 ✋ Left Open Palm| Dark Chakra
 ✋ Both Hands| Power Boost Mode
-👁️ Face Detected| Sharingan Activated
-
 
 🧠 Tech Stack
 
@@ -65,13 +59,6 @@ When both hands are active, chakra becomes unstable and stronger.
 
 
 
-👁️ Sharingan
-
-写輪眼 (Sharingan)
-Activated when face is detected.
-Enhances tracking precision and visual effects.
-
-
 🚀 How to Run
 
 💻 PC (Recommended)
@@ -96,7 +83,6 @@ Enhances tracking precision and visual effects.
 
 💡 Future Upgrades
 
-- 🔴 Mangekyō Sharingan (animated eyes)
 - 🔊 Sound effects (chakra, aura)
 - ✨ Advanced particle system
 - 🎬 Cinematic recording mode
